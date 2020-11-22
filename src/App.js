@@ -1,24 +1,73 @@
-import logo from './logo.svg';
-import './App.css';
-
+import React, { useState, useEffect } from "react";
+import Loading from "./Loading";
+import Tours from "./Tours";
+const url = "https://course-api.com/react-tours-project";
 function App() {
+  const [loading, setLoading] = useState(true);
+  const [tours, setTours] = useState([]);
+
+  /**
+   * Remove the tour with the given id from the tours array
+   * @param {string} id The id of the tour to remove
+   */
+  const removeTour = (id) => {
+    const newTours = tours.filter((tour) => tour.id !== id);
+    setTours(newTours);
+  };
+
+  /**
+   * Fetch the data from the server
+   */
+  const fetchTours = async () => {
+    setLoading(true);
+
+    // Check if the resposnse is successful
+    try {
+      const response = await fetch(url);
+      if (isResponseStatusSuccessful(response.status)) {
+        const tours = await response.json();
+        setLoading(false);
+        setTours(tours);
+      } else {
+        throw new Error(response.statusText);
+      }
+    } catch (error) {
+      setLoading(true);
+      console.log(error);
+    }
+  };
+
+  const isResponseStatusSuccessful = (responseStatus) => {
+    return responseStatus >= 200 && responseStatus <= 299;
+  };
+
+  useEffect(() => {
+    fetchTours();
+  }, []);
+
+  if (loading) {
+    return (
+      <main>
+        <Loading />
+      </main>
+    );
+  }
+  if (tours.length === 0) {
+    return (
+      <main>
+        <div className='title'>
+          <h2>no tours left</h2>
+          <button className='btn' onClick={fetchTours}>
+            refresh
+          </button>
+        </div>
+      </main>
+    );
+  }
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <main>
+      <Tours tours={tours} removeTour={removeTour} />
+    </main>
   );
 }
 
